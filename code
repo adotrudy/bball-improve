@@ -1,0 +1,98 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+
+const attributesList = ["Shooting", "Passing", "Dribbling", "Defense", "Rebounding", "Speed"];
+
+const challenges = {
+  Shooting: ["Make 50 free throws", "Hit 10 3-pointers in a row", "Complete a shooting drill with 80%+ accuracy"],
+  Passing: ["Complete 100 chest passes", "Hit a moving target 20 times", "Do 20 no-look passes in a scrimmage"],
+  Dribbling: ["Perform 100 crossovers", "Do a 2-minute dribbling drill without losing the ball", "Do a cone dribble drill"],
+  Defense: ["Block 5 shots in a game", "Get 10 steals during practice", "Hold opponent under 10 points"],
+  Rebounding: ["Grab 20 rebounds in a scrimmage", "Perfect 10 box-out drills", "Win 3 rebounding battles in a row"],
+  Speed: ["Run 5 full-court sprints in under 30 seconds", "Do a shuttle run under 20 seconds", "Complete a 1-mile run under 7 minutes"]
+};
+
+export default function NBA2KTrainer() {
+  const [attributes, setAttributes] = useState(
+    JSON.parse(localStorage.getItem("attributes")) ||
+    Object.fromEntries(attributesList.map(attr => [attr, 50]))
+  );
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user")) || {
+      name: "Player One",
+      photo: "https://via.placeholder.com/100",
+      number: 23,
+      position: "Shooting Guard"
+    }
+  );
+  const [selectedAttr, setSelectedAttr] = useState("Shooting");
+  const [currentChallenge, setCurrentChallenge] = useState(null);
+
+  const increaseAttribute = (attr) => {
+    const updated = {
+      ...attributes,
+      [attr]: Math.min(attributes[attr] + 1, 99)
+    };
+    setAttributes(updated);
+    localStorage.setItem("attributes", JSON.stringify(updated));
+  };
+
+  const getChallenge = (attr) => {
+    const options = challenges[attr];
+    const random = options[Math.floor(Math.random() * options.length)];
+    setCurrentChallenge(random);
+  };
+
+  const overallScore = Math.round(
+    Object.values(attributes).reduce((a, b) => a + b, 0) / attributesList.length
+  );
+
+  const updateUser = (field, value) => {
+    const updatedUser = { ...user, [field]: value };
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
+  return (
+    <div className="p-6 grid gap-6">
+      <h1 className="text-2xl font-bold">🏀 NBA 2K Attribute Trainer</h1>
+
+      <div className="flex items-center gap-4">
+        <Avatar>
+          <AvatarImage src={user.photo} alt="Player Photo" />
+        </Avatar>
+        <div>
+          <Input placeholder="Name" value={user.name} onChange={(e) => updateUser("name", e.target.value)} />
+          <Input placeholder="Number" type="number" value={user.number} onChange={(e) => updateUser("number", e.target.value)} className="mt-2" />
+          <Input placeholder="Position" value={user.position} onChange={(e) => updateUser("position", e.target.value)} className="mt-2" />
+          <Input placeholder="Photo URL" value={user.photo} onChange={(e) => updateUser("photo", e.target.value)} className="mt-2" />
+        </div>
+      </div>
+
+      <div className="text-xl font-semibold mt-4">Overall Rating: <span className="font-bold text-green-600">{overallScore}</span></div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+        {attributesList.map(attr => (
+          <Card key={attr} className="p-4">
+            <CardContent className="text-center">
+              <h2 className="text-xl font-semibold">{attr}</h2>
+              <p className="text-3xl font-bold">{attributes[attr]}</p>
+              <Button className="mt-2" onClick={() => increaseAttribute(attr)}>Train +1</Button>
+              <Button variant="outline" className="mt-2" onClick={() => { setSelectedAttr(attr); getChallenge(attr); }}>Get Challenge</Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {currentChallenge && (
+        <div className="mt-4 p-4 border rounded-xl shadow">
+          <h3 className="text-xl font-bold">{selectedAttr} Challenge</h3>
+          <p className="text-lg">{currentChallenge}</p>
+        </div>
+      )}
+    </div>
+  );
+}
